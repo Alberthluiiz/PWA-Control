@@ -1,0 +1,39 @@
+# =========================================================
+# CABECERAS DE SEGURIDAD (las lee Netlify al publicar)
+# =========================================================
+# Netlify agrega estas "cabeceras" a cada archivo que entrega. Son
+# instrucciones para el navegador que cierran puertas a ataques comunes.
+# Este archivo NO se publica como página: Netlify solo lo lee.
+#
+# OJO: si cambias el <script> pequeño que está dentro de index.html
+# (el del tema claro/oscuro), hay que calcular de nuevo su "sha256-..."
+# en script-src. Si no, el navegador lo bloquea y la app arranca
+# siempre en modo oscuro (no se pierde ningún dato).
+
+/*
+  # Content-Security-Policy (CSP): lista de lugares de donde la página
+  # puede cargar cosas. Todo lo que no esté aquí, el navegador lo bloquea.
+  #   default-src 'self'        → por defecto, solo archivos de la propia app
+  #   script-src                → JavaScript solo de la app (+ el script del tema)
+  #   style-src / font-src      → estilos de la app y la letra Poppins de Google
+  #   img-src data: blob:       → fotos de perfil y comprobantes guardadas en el celular
+  #   connect-src data:         → leer las fotos de la copia de seguridad
+  #   object-src 'none'         → nada de plugins (Flash, etc.)
+  #   frame-ancestors 'none'    → ninguna otra página puede meter la app en un marco
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-IKDTH8+RH0+/Zr3Eq5Ybydga8iCbN2To69sy7HfaEfs='; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' data: https://fonts.googleapis.com https://fonts.gstatic.com; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  # Lo mismo que frame-ancestors, para navegadores viejos
+  X-Frame-Options: DENY
+  # No "adivinar" el tipo de archivo (un .txt no se ejecuta como script)
+  X-Content-Type-Options: nosniff
+  # Al abrir Google Calendar no se le manda la dirección completa de la app
+  Referrer-Policy: strict-origin-when-cross-origin
+  # La app no usa micrófono, ubicación ni pagos: se apagan.
+  # (La cámara sí se deja: "Tomar foto" la usa.)
+  Permissions-Policy: microphone=(), geolocation=(), payment=(), usb=()
+  # La app se separa de otras ventanas abiertas (protege la memoria del navegador)
+  Cross-Origin-Opener-Policy: same-origin
+
+# El service worker siempre se revisa en internet, para que las
+# actualizaciones lleguen apenas se publican.
+/sw.js
+  Cache-Control: no-cache

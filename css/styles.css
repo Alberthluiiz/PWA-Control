@@ -1,0 +1,1274 @@
+/* =========================================================
+   1. VARIABLES (colores del diseño)
+   ========================================================= */
+:root {
+  font-family: "Poppins", sans-serif;
+  /* MODO OSCURO (el de siempre) */
+  --fondo-1: #0f172a; /* fondo de la página y de las cajitas internas */
+  --tarjeta: #162033; /* fondo de las tarjetas */
+  --texto: #ffffff; /* texto principal */
+  --texto-suave: #94a3b8; /* texto secundario */
+  --primario: #2563eb; /* color principal: botones, opción elegida, caja del dibujo */
+  --primario-texto: #60a5fa; /* color principal para TEXTO y enlaces */
+  --primario-oscuro: #1e3a8a; /* base de la caja registradora del dibujo */
+  --primario-suave: #93c5fd; /* teclas del dibujo */
+  --azul-etiqueta: #60a5fa; /* texto de la etiqueta "Fijo" */
+  --verde: #34d399;
+  --rojo: #f87171;
+  --naranja: #fb923c; /* descuadres en el gráfico por estación */
+  --naranja-texto: #fb923c; /* mismo naranja para letras */
+  --amarillo: #fbbf24;
+  --borde: #243049;
+  --sombra: none;
+  color-scheme: dark; /* calendario, listas y barras del navegador en oscuro */
+}
+
+/* MODO CLARO con los colores de la empresa:
+   naranja institucional, blanco y gris. Solo se cambian los valores de las
+   variables: todo el diseño usa var(--...), así que se adapta solo.
+   JavaScript pone data-tema="claro" en <html> (función aplicarTema).
+   👉 Para ajustar un color de la empresa, cámbialo SOLO aquí. */
+:root[data-tema="claro"] {
+  --fondo-1: #f4f4f5; /* gris muy claro */
+  --tarjeta: #ffffff;
+  --texto: #1f2937; /* gris oscuro (casi negro) */
+  --texto-suave: #6b7280;
+  --primario: #ec6608; /* naranja de la empresa */
+  --primario-texto: #c2410c; /* naranja más oscuro para que se lea como texto */
+  --primario-oscuro: #9a3412;
+  --primario-suave: #fdba74;
+  --azul-etiqueta: #1d4ed8;
+  --verde: #059669;
+  --rojo: #b91c1c;
+  --naranja: #ec6608; /* descuadres en el gráfico por estación */
+  --naranja-texto: #c2410c; /* más oscuro para que se lea sobre blanco */
+  --amarillo: #b45309; /* ámbar oscuro: se distingue del naranja principal */
+  --borde: #e5e7eb;
+  --sombra: 0 1px 3px rgb(31 41 55 / 0.08);
+  color-scheme: light;
+}
+
+/* =========================================================
+   2. RESET Y BASE
+   ========================================================= */
+html {
+  box-sizing: border-box;
+}
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
+body {
+  margin: 0;
+  background: var(--fondo-1);
+  color: var(--texto);
+}
+
+/* Los botones, inputs y select no heredan la fuente solos: se la pedimos */
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+/* El atributo hidden SIEMPRE oculta, aunque la clase diga display: flex */
+[hidden] {
+  display: none !important;
+}
+
+/* Los iconos SVG: tamaño fijo y hereda el color del texto */
+.icono {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+/* Diseño de celular: en pantallas grandes se centra con ancho máximo */
+.encabezado,
+main {
+  max-width: 30rem;
+  margin: 0 auto;
+}
+
+/* =========================================================
+   3. ENCABEZADO
+   ========================================================= */
+/* Encabezado en 2 filas (como la barra de una app):
+     fila 1: "ESTACIONES" a la izquierda, botones de tema y perfil a la derecha
+     fila 2: el título "Control de Cuadres" con todo el ancho
+   grid-template-areas dibuja la cuadrícula con nombres */
+.encabezado {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "marca  acciones"
+    "titulo titulo";
+  align-items: center;
+  column-gap: 0.75rem;
+  padding: 1rem 1rem 0.5rem;
+}
+
+/* display: contents = el <div> que envuelve al <p> y al <h1> "desaparece"
+   para la cuadrícula, así cada uno puede ir en su propia fila */
+.encabezado-textos {
+  display: contents;
+}
+
+.encabezado p {
+  grid-area: marca;
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1rem;
+}
+
+.encabezado h1 {
+  grid-area: titulo;
+  margin: 0.5rem 0 0;
+  font-size: 1.6rem;
+}
+
+/* Lado derecho del encabezado: botón de tema + perfil */
+.encabezado-acciones {
+  grid-area: acciones;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+/* Botón de modo claro/oscuro: círculo con un sol o una luna */
+.boton-tema {
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--borde);
+  background: var(--tarjeta);
+  cursor: pointer;
+}
+
+.boton-tema:hover {
+  color: var(--amarillo);
+}
+
+/* En modo oscuro se ve el SOL (para pasar a claro);
+   en modo claro se ve la LUNA (para pasar a oscuro) */
+.icono-luna,
+:root[data-tema="claro"] .icono-sol {
+  display: none;
+}
+:root[data-tema="claro"] .icono-luna {
+  display: block;
+}
+
+/* Botón de perfil: avatar + nombre en una "píldora" */
+.boton-perfil {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0; /* deja que el nombre se recorte con "…" */
+  max-width: 11rem;
+  padding: 0.25rem 0.75rem 0.25rem 0.25rem;
+  border-radius: 50rem;
+  border: 1px solid var(--borde);
+  background: var(--tarjeta);
+  cursor: pointer;
+}
+
+/* Nombre al lado del avatar. Si es muy largo se corta con "…" */
+.perfil-nombre {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Sin nombre todavía (antes de registrarse): solo el círculo */
+.perfil-nombre:empty {
+  display: none;
+}
+
+/* Avatar: círculo con las iniciales (como WhatsApp cuando no hay foto).
+   El color de fondo lo pone JavaScript según el nombre (función colorDelNombre) */
+.avatar {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--texto-suave);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  /* Si hay foto, la llena y la recorta en círculo */
+  background-size: cover;
+  background-position: center;
+}
+
+.avatar-grande {
+  width: 4.5rem;
+  height: 4.5rem;
+  margin: 0 auto 0.75rem;
+  font-size: 1.6rem;
+}
+
+/* =========================================================
+   4. TARJETA (se reutiliza en las 3 secciones)
+   ========================================================= */
+.tarjeta {
+  background-color: var(--tarjeta);
+  border: 1px solid var(--borde);
+  box-shadow: var(--sombra);
+  padding: 1rem;
+  border-radius: 1rem;
+  margin: 1rem;
+}
+
+.titulo-tarjeta {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+}
+
+/* =========================================================
+   5. EFICIENCIA DEL MES
+   ========================================================= */
+.eficiencia-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.eficiencia-encabezado h2 {
+  margin: 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03rem;
+  color: var(--texto-suave);
+}
+
+/* Píldora del mes */
+.eficiencia-mes {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem 0.8rem;
+  white-space: nowrap; /* "Oct 2026" nunca se parte en dos líneas */
+  background: var(--fondo-1);
+  border: 1px solid var(--borde);
+  border-radius: 50rem;
+  font-weight: 600;
+}
+
+.eficiencia-mes button {
+  background: none;
+  border: none;
+  padding: 0 0.25rem; /* quita el relleno que el navegador pone por defecto */
+  cursor: pointer;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+/* Flecha activa: se pinta de amarillo al pasar el mouse */
+.eficiencia-mes button:hover:not(:disabled) {
+  color: var(--amarillo);
+}
+
+/* Flecha bloqueada (› en el mes actual): apagada y sin manito */
+.eficiencia-mes button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Anillo + mensaje en una fila */
+.eficiencia-resumen {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin: 1.25rem 0;
+}
+
+.eficiencia-resumen h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1.1rem;
+}
+
+.eficiencia-resumen p {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+
+/* El anillo: position:relative para poder centrar el % encima del SVG */
+.anillo {
+  position: relative;
+  width: 7rem;
+  height: 7rem;
+  flex-shrink: 0; /* no dejar que se aplaste */
+}
+
+.anillo svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg); /* para que el relleno empiece arriba */
+}
+
+.anillo-fondo,
+.anillo-progreso {
+  fill: none;
+  stroke-width: 9;
+}
+
+.anillo-fondo {
+  stroke: var(--borde);
+}
+
+.anillo-progreso {
+  stroke: var(--amarillo);
+  stroke-linecap: round;
+  stroke-dasharray: 264; /* circunferencia completa */
+  stroke-dashoffset: 264; /* empieza VACÍO (0%); JavaScript lo rellena */
+  transition: stroke-dashoffset 0.6s ease; /* el anillo se llena con animación */
+}
+
+.anillo strong {
+  position: absolute;
+  inset: 0; /* ocupa todo el .anillo */
+  display: grid;
+  place-items: center; /* centra el texto */
+  font-size: 1.5rem;
+  color: var(--amarillo);
+}
+
+/* Contadores con Grid: 3 columnas iguales */
+.contadores {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.contadores li {
+  background: var(--fondo-1);
+  border: 1px solid var(--borde);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.contadores span {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+  padding-bottom: 1rem;
+}
+
+.contadores strong {
+  font-size: 1.5rem;
+}
+
+.verde {
+  color: var(--verde);
+}
+.rojo {
+  color: var(--rojo);
+}
+
+/* =========================================================
+   6. FORMULARIO
+   ========================================================= */
+#form-turno {
+  display: grid;
+  gap: 1rem; /* espacio uniforme entre todos los bloques */
+}
+
+/* Fecha y estación en 2 columnas */
+.fila-dos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+/* Cada campo: etiqueta arriba, control abajo */
+.campo {
+  display: block;
+}
+
+/* Solo el PRIMER <span> hijo directo (la etiqueta "Fecha", "Estación"...) */
+.campo > span:first-child,
+.grupo legend {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.9rem;
+  color: var(--texto-suave);
+}
+
+.campo input,
+.campo select {
+  width: 100%; /* evita que se desborde en celular */
+  padding: 0.75rem;
+  background: var(--fondo-1);
+  border: 1px solid var(--borde);
+  border-radius: 0.75rem;
+}
+
+/* Resaltar el campo en el que estás escribiendo */
+.campo input:focus,
+.campo select:focus {
+  outline: 2px solid var(--primario);
+  outline-offset: 1px;
+}
+
+/* --- Fecha con formato dd/mm/aaaa en celular --- */
+.campo-fecha {
+  display: block;
+  position: relative; /* para colocar .fecha-texto encima del input */
+}
+
+/* En computadora no se usa: ahí el navegador ya muestra dd/mm/aaaa */
+.fecha-texto {
+  display: none;
+}
+
+/* pointer: coarse = pantalla táctil (celular o tablet) */
+@media (pointer: coarse) {
+  /* Ocultar el texto original del input (el que sale 10/18/2026)... */
+  .campo-fecha .fecha {
+    color: transparent;
+    -webkit-text-fill-color: transparent; /* necesario en iPhone/Safari */
+  }
+
+  /* ...y mostrar el nuestro encima, en el mismo lugar */
+  .fecha-texto {
+    display: flex;
+    align-items: center;
+    position: absolute;
+    inset: 0; /* ocupa todo el input */
+    padding: 0 calc(0.75rem + 1px); /* mismo relleno + borde que el input */
+    pointer-events: none; /* el toque "atraviesa" el texto y abre el calendario */
+  }
+}
+
+/* fieldset sin el estilo por defecto del navegador */
+.grupo {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.grupo legend {
+  padding: 0;
+}
+
+/* --- Radios ocultos: lo visible es el <span> --- */
+.opcion {
+  display: block;
+  position: relative;
+  cursor: pointer;
+}
+
+.opcion input {
+  position: absolute;
+  opacity: 0; /* invisible pero sigue funcionando con teclado */
+}
+
+.opcion span {
+  display: block;
+  text-align: center;
+}
+
+/* Foco con teclado visible */
+.opcion input:focus-visible + span {
+  outline: 2px solid var(--primario);
+  outline-offset: 2px;
+}
+
+/* --- Tipo de turno: control segmentado --- */
+.segmentado {
+  display: grid;
+  grid-auto-flow: column; /* una columna por cada opción */
+  grid-auto-columns: 1fr; /* todas del mismo ancho */
+  gap: 0.25rem;
+  padding: 0.3rem;
+  background: var(--fondo-1);
+  border: 1px solid var(--borde);
+  border-radius: 0.75rem;
+}
+
+.segmentado .opcion span {
+  padding: 0.7rem 0;
+  border-radius: 0.6rem;
+  font-weight: 600;
+}
+
+/* input:checked + span = el span que está justo después del radio marcado */
+.segmentado input:checked + span {
+  background: var(--primario);
+  color: #fff; /* blanco sobre el color principal en los dos modos */
+}
+
+/* --- Resultado: 2 botones grandes --- */
+.resultado {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.resultado .opcion span {
+  padding: 1.1rem 0.5rem;
+  background: var(--fondo-1);
+  border: 2px solid var(--borde);
+  border-radius: 0.75rem;
+  font-weight: 600;
+}
+
+/* Iconos ✓ y ✕ con ::before (texto generado por CSS) */
+.opcion-cuadrada::before {
+  content: "✓ ";
+}
+.opcion-no-cuadrada::before {
+  content: "✕ ";
+}
+
+.resultado input:checked + .opcion-cuadrada {
+  border-color: var(--verde);
+  color: var(--verde);
+}
+
+.resultado input:checked + .opcion-no-cuadrada {
+  border-color: var(--rojo);
+  color: var(--rojo);
+}
+
+/* --- Botón principal --- */
+.boton-principal {
+  width: 100%;
+  padding: 0.9rem;
+  background: var(--primario);
+  color: #fff; /* blanco sobre el color principal en los dos modos */
+  border: none;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.boton-principal:hover {
+  filter: brightness(1.15); /* un poco más claro al pasar el mouse */
+}
+
+/* =========================================================
+   6b. POR ESTACIÓN (gráfico de barras verticales)
+   ========================================================= */
+.estaciones-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+/* Mes que se está mostrando, a la derecha del título */
+#estaciones-mes {
+  color: var(--texto-suave);
+  font-size: 0.85rem;
+}
+
+/* Leyenda: ● Cuadrados  ● Descuadres */
+.leyenda {
+  display: flex;
+  gap: 1rem;
+  margin: 0 0 1rem;
+  color: var(--texto-suave);
+  font-size: 0.8rem;
+}
+
+.leyenda span {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.leyenda .punto {
+  display: inline-block;
+}
+
+/* Contenedor de las columnas: una al lado de la otra, pegadas abajo.
+   Si hay muchas estaciones, se desliza de lado con el dedo. */
+.lista-estaciones {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0.25rem;
+  display: flex;
+  align-items: flex-start; /* todas arrancan arriba: el "piso" queda parejo */
+  gap: 0.35rem;
+  overflow-x: auto;
+}
+
+/* Una columna: número arriba, barra, nombre y descuadres abajo */
+.columna {
+  flex: 1 0 2.2rem; /* crece para llenar, pero nunca más angosta que 2.2rem */
+  max-width: 3.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  text-align: center;
+}
+
+.columna-total {
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-bottom: 0.2rem;
+}
+
+/* Área fija de alto: representa a la estación con MÁS turnos (100 %).
+   La barra se apoya abajo (justify-content: flex-end). */
+.columna-area {
+  width: 100%;
+  height: 9rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  border-bottom: 2px solid var(--borde); /* línea del "piso" */
+}
+
+/* La barra: su alto (lo pone JavaScript) = turnos de esta estación
+   comparados con la que más tiene. Por dentro: naranja arriba, verde abajo. */
+.columna-barra {
+  width: 75%;
+  max-width: 2rem;
+  display: flex;
+  flex-direction: column;
+  border-radius: 0.4rem 0.4rem 0 0; /* puntas de arriba redondeadas */
+  overflow: hidden;
+}
+
+.columna-barra .parte-verde {
+  background: var(--verde);
+}
+
+.columna-barra .parte-naranja {
+  background: var(--naranja);
+}
+
+/* Sigla de la estación (QU, MV, SO...) */
+.columna-nombre {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+/* Número de descuadres en naranja debajo de la sigla (vacío si no hubo) */
+.columna-descuadres {
+  min-height: 0.9rem;
+  font-size: 0.65rem;
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--naranja-texto);
+}
+
+/* "Desliza para ver más estaciones →" */
+.aviso-deslizar {
+  margin: 0.5rem 0 0;
+  text-align: right;
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+}
+
+/* Puntito naranja de la leyenda */
+.punto-naranja {
+  background: var(--naranja);
+}
+
+/* Mensaje cuando el mes no tiene turnos (mismo estilo que el historial) */
+.lista-estaciones .historial-vacio {
+  list-style: none;
+}
+
+/* =========================================================
+   7. HISTORIAL
+   ========================================================= */
+.historial-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.historial-encabezado .titulo-tarjeta {
+  margin: 0;
+}
+
+.boton-secundario {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0.9rem;
+  background: none;
+  border: 1px solid var(--borde);
+  border-radius: 0.75rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.boton-secundario:hover {
+  border-color: var(--primario);
+  color: var(--primario-texto);
+}
+
+/* Filtros (píldoras) */
+.filtros {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap; /* si no caben, bajan a otra línea */
+}
+
+.filtro {
+  padding: 0.5rem 0.8rem;
+  background: none;
+  border: 1px solid var(--borde);
+  border-radius: 50rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+/* Filtro activo: colores "al revés" (fondo del color del texto) */
+.filtro.activo {
+  background: var(--texto);
+  color: var(--tarjeta);
+  font-weight: 600;
+}
+
+/* Lista de registros */
+.lista-historial {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+/* Cada registro ahora es una GRILLA de 4 columnas:
+     punto | info (estación + fecha) | etiquetas | lápiz y papelera
+   Si hay observación o comprobante, van en filas debajo
+   (ver .registro-obs y .ver-comprobante). */
+.registro {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  column-gap: 0.75rem;
+  row-gap: 0.5rem;
+  padding: 0.9rem;
+  background: var(--fondo-1);
+  border: 1px solid var(--borde);
+  border-radius: 0.75rem;
+}
+
+.registro-info {
+  min-width: 0; /* permite que el texto largo se ajuste en vez de desbordar */
+}
+
+.registro-info strong {
+  display: block;
+}
+
+.registro-info p {
+  margin: 0.15rem 0 0;
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+}
+
+/* Observación en su propia fila.
+   grid-column: 2 / -1 → empieza en la columna 2 (debajo del nombre)
+   y llega hasta la última (-1), así usa todo el ancho disponible. */
+.registro-obs {
+  grid-column: 2 / -1;
+  margin: 0;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--borde); /* línea fina que la separa */
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+  overflow-wrap: anywhere; /* una palabra muy larga baja de línea en vez de salirse */
+}
+
+/* Puntito de color */
+.punto {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+}
+.punto-verde {
+  background: var(--verde);
+}
+.punto-rojo {
+  background: var(--rojo);
+}
+
+/* Las 2 etiquetas (resultado + tipo de turno) una encima de la otra */
+.registro-etiquetas {
+  display: flex;
+  flex-direction: column; /* en columna: una debajo de la otra */
+  align-items: stretch; /* las dos del mismo ancho */
+  gap: 0.3rem;
+}
+
+/* Etiquetas (píldoras de color) */
+.etiqueta {
+  padding: 0.3rem 0.8rem;
+  border-radius: 50rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Resultado: Cuadrada verde, Descuadre rojo */
+.etiqueta-verde {
+  background: rgba(52, 211, 153, 0.15); /* verde con 15% de opacidad */
+  color: var(--verde);
+}
+.etiqueta-roja {
+  background: rgba(248, 113, 113, 0.15);
+  color: var(--rojo);
+}
+
+/* Tipo de turno: Fijo azul, Reserva amarillo */
+.etiqueta-fijo {
+  background: rgba(37, 99, 235, 0.15); /* azul con 15% de opacidad */
+  color: var(--azul-etiqueta);
+}
+.etiqueta-reserva {
+  background: rgba(251, 191, 36, 0.15); /* amarillo con 15% de opacidad */
+  color: var(--amarillo);
+}
+
+/* Lápiz (editar) arriba y papelera (eliminar) abajo */
+.registro-acciones {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* Botones de editar (lápiz) y eliminar (papelera) */
+.editar,
+.eliminar {
+  background: none;
+  border: none;
+  color: var(--texto-suave);
+  cursor: pointer;
+  padding: 0.25rem;
+}
+.editar:hover {
+  color: var(--primario-texto);
+}
+.eliminar:hover {
+  color: var(--rojo);
+}
+
+/* Turno que se está editando: borde del color principal */
+.registro.editando {
+  border-color: var(--primario);
+  box-shadow: 0 0 0 1px var(--primario);
+}
+
+/* "Ver comprobante": fila propia debajo, como la observación */
+.ver-comprobante {
+  grid-column: 2 / -1;
+  justify-self: start;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  background: none;
+  border: 1px solid var(--borde);
+  border-radius: 50rem;
+  color: var(--primario-texto);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Selector ‹ mes › del historial, centrado sobre los filtros */
+.historial-mes-fila {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+/* Mensaje cuando todavía no hay turnos */
+.historial-vacio {
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+  border: 1px dashed var(--borde);
+  border-radius: 0.75rem;
+}
+
+/* =========================================================
+   8. VENTANAS (registro y menú de perfil)
+   ========================================================= */
+.dialogo {
+  width: calc(100% - 2rem);
+  max-width: 24rem;
+  padding: 1.5rem 1.25rem 1rem;
+  background: var(--tarjeta);
+  color: var(--texto);
+  border: 1px solid var(--borde);
+  border-radius: 1rem;
+  text-align: center;
+}
+
+/* Fondo oscuro detrás de la ventana */
+.dialogo::backdrop {
+  background: rgb(0 0 0 / 0.7);
+}
+
+.dialogo h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.25rem;
+  overflow-wrap: anywhere; /* nombres largos sin espacios no se salen */
+}
+
+.dialogo-texto {
+  margin: 0 0 1.25rem;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+
+.dialogo .campo {
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+/* Avatar de la ventana de registro: se puede tocar para elegir foto */
+.avatar-editable {
+  cursor: pointer;
+}
+
+.botones-foto {
+  display: flex;
+  flex-wrap: wrap; /* si no caben en una fila, bajan a la siguiente */
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Bloque "Recordatorios (opcionales)" del menú de perfil */
+.recordatorios {
+  margin: 1rem 0 0.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--borde);
+  text-align: left;
+}
+
+.recordatorios h3 {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.recordatorios h3 span {
+  color: var(--texto-suave);
+  font-weight: 400;
+}
+
+.recordatorios .grupo {
+  margin: 0.5rem 0 0.25rem;
+}
+
+/* Opciones de duración un poco más pequeñas que las del formulario */
+.recordatorios .segmentado .opcion span {
+  padding: 0.5rem 0.25rem;
+  font-size: 0.85rem;
+}
+
+/* Texto de ayuda pequeño debajo de los botones (ej: recordatorios) */
+.dialogo-ayuda {
+  margin: 0.4rem 0 0.25rem;
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+}
+
+/* Botón secundario a todo el ancho (Agregar persona, Recordatorio, Cerrar sesión) */
+.boton-ancho {
+  width: 100%;
+  color: inherit; /* para que un enlace <a> se vea igual que un botón */
+  text-decoration: none;
+  justify-content: center;
+  margin-top: 0.5rem;
+  padding: 0.8rem;
+  font-size: 0.95rem;
+}
+
+.boton-salir {
+  color: var(--rojo);
+}
+
+/* "Eliminar perfil": texto rojo pequeño, para que no se toque sin querer */
+.boton-texto.boton-eliminar {
+  color: var(--rojo);
+  font-size: 0.85rem;
+}
+
+.boton-salir:hover {
+  border-color: var(--rojo);
+  color: var(--rojo);
+}
+
+/* Lista "¿Quién va a registrar?": una fila por persona */
+.lista-usuarios {
+  display: grid;
+  gap: 0.5rem;
+  max-height: 50vh;
+  overflow-y: auto; /* si hay muchas personas, se desplaza */
+}
+
+.usuario-opcion {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--fondo-1);
+  border: 1px solid var(--borde);
+  border-radius: 0.75rem;
+  text-align: left;
+  font-weight: 500;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.usuario-opcion:hover {
+  border-color: var(--primario);
+}
+
+/* Botón sin borde para acciones secundarias (Cancelar, Cerrar) */
+.boton-texto {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: none;
+  border: none;
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+
+.boton-texto:hover {
+  color: var(--texto);
+}
+
+/* =========================================================
+   9. CARÁTULA DE INICIO (al abrir sin sesión o al cerrar sesión)
+   ========================================================= */
+/* Es un <dialog> que ocupa TODA la pantalla, como el inicio de Facebook */
+.caratula {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: var(--fondo-1);
+  color: var(--texto);
+}
+
+/* Contenido centrado con el mismo ancho que la app */
+.caratula-contenido {
+  position: relative;
+  max-width: 30rem;
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 1.5rem 1rem calc(1.5rem + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+
+/* Botón de tema en la esquina de la carátula */
+.caratula .boton-tema {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+.caratula-ilustracion {
+  width: min(16rem, 75%);
+  margin: 0 auto 0.5rem;
+}
+
+.caratula-marca {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1rem;
+}
+
+.caratula h1 {
+  margin: 0.25rem 0;
+  font-size: 1.8rem;
+}
+
+.caratula-lema {
+  margin: 0 0 1.5rem;
+  color: var(--texto-suave);
+}
+
+/* Versión y autor al pie de la carátula */
+.caratula-creditos {
+  margin: 1.25rem 0 0;
+  color: var(--texto-suave);
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.caratula-creditos strong {
+  color: var(--texto);
+  font-weight: 600;
+}
+
+/* Tarjeta blanca/oscura con la lista de personas */
+.caratula-tarjeta {
+  margin: 0;
+  text-align: left;
+}
+
+.caratula-tarjeta h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+}
+
+.caratula-tarjeta .lista-usuarios:empty {
+  display: none;
+}
+
+/* Colores de la ilustración: usan las variables, así cambian con el tema */
+.ilus-fondo {
+  fill: var(--tarjeta);
+  stroke: var(--borde);
+  stroke-width: 2;
+}
+.ilus-cuerpo {
+  fill: var(--primario);
+}
+.ilus-oscuro {
+  fill: var(--primario-oscuro);
+}
+.ilus-pantalla {
+  fill: #0f172a;
+}
+.ilus-pantalla-texto {
+  fill: #34d399;
+  font: 700 18px "Poppins", sans-serif;
+}
+.ilus-tecla {
+  fill: var(--primario-suave);
+}
+.ilus-papel {
+  fill: #ffffff;
+  stroke: var(--borde);
+  stroke-width: 1.5;
+}
+.ilus-linea {
+  stroke: #cbd5e1;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.ilus-moneda {
+  fill: #fbbf24;
+  stroke: #d97706;
+  stroke-width: 2;
+}
+.ilus-billete {
+  fill: #34d399;
+  stroke: #059669;
+  stroke-width: 2;
+}
+.ilus-check {
+  fill: #16a34a;
+}
+
+/* =========================================================
+   10. PIE DE PÁGINA
+   ========================================================= */
+.pie {
+  max-width: 30rem; /* mismo ancho que el contenido */
+  margin: 0 auto;
+  /* 4rem abajo: deja libre la etiqueta "Powered by Netlify" de la esquina.
+     env(safe-area-inset-bottom) = espacio de la barra de gestos del iPhone */
+  padding: 0.5rem 1rem calc(4rem + env(safe-area-inset-bottom));
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+}
+
+.pie p {
+  margin: 0.35rem 0;
+}
+
+/* Píldora con el candado (mismo estilo que los filtros) */
+.pie .pie-privacidad {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--borde);
+  border-radius: 50rem;
+}
+
+.pie .icono {
+  width: 0.9rem;
+  height: 0.9rem;
+  flex-shrink: 0;
+}
+
+.pie a {
+  color: var(--primario-texto);
+  text-decoration: none;
+}
+
+.pie a:hover {
+  text-decoration: underline;
+}
+
+/* =========================================================
+   10. COMPROBANTE DE DEPÓSITO (foto)
+   ========================================================= */
+.campo-comprobante .botones-foto {
+  justify-content: flex-start;
+  margin-bottom: 0;
+}
+
+/* Miniatura en el formulario antes de guardar */
+.comprobante-previa {
+  display: block;
+  max-width: 100%;
+  max-height: 12rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--borde);
+  border-radius: 0.75rem;
+  object-fit: contain;
+}
+
+/* Foto grande en la ventana "Comprobante de depósito" */
+.comprobante-imagen {
+  display: block;
+  width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+  border-radius: 0.75rem;
+  background: var(--fondo-1);
+}
