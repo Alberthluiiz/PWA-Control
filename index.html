@@ -11,22 +11,15 @@
     <!-- iPhone: icono y modo app (Safari no lee todo del manifest) -->
     <link rel="apple-touch-icon" href="icons/icon-192.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <!-- TEMA (claro/oscuro) ANTES de pintar la página, para que no "parpadee"
-         en oscuro y luego cambie a claro. Lee la elección guardada; si no hay,
-         usa la del celular (prefers-color-scheme). La lógica completa está en app.js -->
-    <script>
-      try {
-        const temaGuardado = localStorage.getItem("cuadres-tema");
-        const prefiereClaro = matchMedia("(prefers-color-scheme: light)").matches;
-        if (temaGuardado === "claro" || (!temaGuardado && prefiereClaro)) {
-          document.documentElement.dataset.tema = "claro";
-        }
-      } catch {}
-    </script>
+    <meta name="mobile-web-app-capable" content="yes" />
+    <!-- Tema claro/oscuro ANTES de pintar (ver el comentario dentro del archivo) -->
+    <script src="js/tema-inicial.js"></script>
     <!-- Primero normalize (reinicia estilos del navegador), después tus estilos -->
     <link rel="stylesheet" href="css/normalize.css" />
     <link rel="stylesheet" href="css/styles.css" />
-    <script src="js/app.js" defer></script>
+    <!-- type="module" permite usar import/export entre archivos.
+         Los módulos se cargan como "defer": después de leer todo el HTML. -->
+    <script type="module" src="js/main.js"></script>
     <!-- Fuente Poppins (solo pesos 400, 500, 600, 700) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -41,32 +34,23 @@
     <header class="encabezado">
       <div class="encabezado-textos">
         <p>Área de recaudo</p>
-        <h1>Control de Cuadres</h1>
+        <!-- El título cambia según la sección (pantallas/navegacion.js) -->
+        <h1 id="titulo-vista">Control de Cuadres</h1>
       </div>
-      <!-- Lado derecho: botón de modo claro/oscuro + perfil -->
       <div class="encabezado-acciones">
         <button type="button" class="boton-tema" aria-label="Cambiar entre modo claro y oscuro">
-          <!-- Sol: se ve en modo oscuro -->
           <svg class="icono icono-sol" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="12" cy="12" r="4" />
             <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
           </svg>
-          <!-- Luna: se ve en modo claro -->
           <svg class="icono icono-luna" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
           </svg>
         </button>
-        <!-- Botón de perfil: avatar con las iniciales + nombre (estilo WhatsApp).
-             Las iniciales, el color y el nombre los escribe JavaScript
-             (función mostrarUsuario). Al tocarlo se abre el menú de perfil. -->
-        <button
-          type="button"
-          id="boton-perfil"
-          class="boton-perfil"
-          aria-label="Perfil"
-        >
+        <!-- Avatar + nombre (estilo WhatsApp). Al tocarlo se abre el menú de perfil -->
+        <button type="button" id="boton-perfil" class="boton-perfil" aria-label="Perfil">
           <span class="avatar" id="avatar-encabezado" aria-hidden="true"></span>
           <span class="perfil-nombre" id="nombre-encabezado"></span>
         </button>
@@ -74,315 +58,478 @@
     </header>
 
     <main>
-      <!-- ================= EFICIENCIA DEL MES ================= -->
-      <section class="tarjeta">
-        <!-- Fila: título a la izquierda, selector de mes a la derecha -->
-        <div class="eficiencia-encabezado">
-          <h2>Eficiencia del mes</h2>
-          <!-- El texto del mes lo escribe JavaScript (función mostrarMes).
-               aria-live="polite" hace que los lectores de pantalla anuncien el mes nuevo -->
-          <div class="eficiencia-mes">
-            <button type="button" id="mes-anterior" aria-label="Mes anterior">
-              ‹
-            </button>
-            <span id="mes-texto" aria-live="polite">Oct 2026</span>
-            <button type="button" id="mes-siguiente" aria-label="Mes siguiente">
-              ›
-            </button>
+      <!-- Cada <section class="vista"> es una "pantalla". Solo se ve una a
+           la vez: navegacion.js le quita el "hidden" a la que toca según
+           la dirección (#inicio, #turnos, #ot, #descuentos...). -->
+
+      <!-- =============== VISTA: INICIO =============== -->
+      <section class="vista" data-vista="inicio" aria-labelledby="titulo-vista">
+        <div class="tarjeta">
+          <div class="eficiencia-encabezado">
+            <h2>Eficiencia del mes</h2>
+            <!-- Selector de mes: hay uno en cada vista y van juntos (estado.js) -->
+            <div class="eficiencia-mes selector-mes">
+              <button type="button" data-mes="-1" aria-label="Mes anterior">‹</button>
+              <span class="mes-texto" aria-live="polite"></span>
+              <button type="button" data-mes="1" aria-label="Mes siguiente">›</button>
+            </div>
+          </div>
+
+          <div class="eficiencia-resumen">
+            <div class="anillo">
+              <!-- viewBox 100x100, radio 42 → circunferencia = 2·π·42 ≈ 264 -->
+              <svg viewBox="0 0 100 100" aria-hidden="true">
+                <circle class="anillo-fondo" cx="50" cy="50" r="42" />
+                <circle class="anillo-progreso" cx="50" cy="50" r="42" />
+                <!-- Rayita de la meta (80 %). La posición la calcula inicio.js -->
+                <line class="anillo-meta" id="anillo-meta" x1="0" y1="0" x2="0" y2="0" />
+              </svg>
+              <strong id="porcentaje">0%</strong>
+            </div>
+            <div>
+              <span class="etiqueta" id="meta-etiqueta"></span>
+              <h3 id="mensaje">Sin registros</h3>
+              <p>Turnos cuadrados sobre el total del mes. La rayita marca la meta.</p>
+            </div>
+          </div>
+
+          <ul class="contadores">
+            <li><span>Turnos</span><strong id="total-turnos">0</strong></li>
+            <li><span>Cuadrados</span><strong id="total-cuadrados" class="verde">0</strong></li>
+            <li><span>Descuadres</span><strong id="total-descuadres" class="naranja">0</strong></li>
+          </ul>
+
+          <!-- Descuadres permitidos para no bajar de la meta -->
+          <div class="permitidos">
+            <div class="fila-separada">
+              <span>Descuadres permitidos</span>
+              <strong id="permitidos-texto"></strong>
+            </div>
+            <div class="permitidos-barra" id="permitidos-barra" aria-hidden="true"></div>
+            <p id="permitidos-ayuda"></p>
           </div>
         </div>
 
-        <!-- Valores iniciales en 0. JavaScript los calcula al cargar
-             (función actualizarEficiencia) -->
-        <div class="eficiencia-resumen">
-          <div class="anillo">
-            <!-- viewBox 100x100, radio 42 → circunferencia = 2·π·42 ≈ 264 -->
-            <svg viewBox="0 0 100 100" aria-hidden="true">
-              <circle class="anillo-fondo" cx="50" cy="50" r="42" />
-              <circle class="anillo-progreso" cx="50" cy="50" r="42" />
-            </svg>
-            <strong id="porcentaje">0%</strong>
+        <!-- OT pendientes (de todos los meses) -->
+        <div class="tarjeta tarjeta-aviso" id="inicio-ot">
+          <div class="fila-separada">
+            <h2 class="titulo-tarjeta sin-margen">OT pendientes</h2>
+            <span class="etiqueta etiqueta-pendiente" id="inicio-ot-cuantas"></span>
           </div>
-          <div>
-            <h3 id="mensaje">Sin registros</h3>
-            <p>Turnos cuadrados sobre el total registrado este mes.</p>
-          </div>
+          <ul class="lista-simple" id="inicio-ot-lista"></ul>
+          <a class="enlace-ver" href="#ot">Ver todas las OT →</a>
         </div>
 
-        <!-- 3 contadores: etiqueta arriba, número abajo -->
-        <ul class="contadores">
-          <li>
-            <span>Turnos</span>
-            <strong id="total-turnos">0</strong>
-          </li>
-          <li>
-            <span>Cuadrados</span>
-            <strong id="total-cuadrados" class="verde">0</strong>
-          </li>
-          <li>
-            <span>Descuadres</span>
-            <strong id="total-descuadres" class="rojo">0</strong>
-          </li>
-        </ul>
+        <!-- Descuentos del mes -->
+        <div class="tarjeta">
+          <h2 class="titulo-tarjeta" id="inicio-desc-titulo">Descuentos del mes</h2>
+          <p class="monto-etiqueta">Saldo a descontar</p>
+          <strong class="monto-grande rojo" id="inicio-desc-saldo">$0,00</strong>
+          <div class="mini-dos">
+            <div><span>En revisión</span><strong class="amarillo" id="inicio-desc-revision">$0,00</strong></div>
+            <div><span>Justificado</span><strong class="verde" id="inicio-desc-justificado">$0,00</strong></div>
+          </div>
+          <a class="enlace-ver" href="#descuentos">Ver detalle →</a>
+        </div>
+
+        <!-- Gráfico por estación (inicio.js → mostrarPorEstacion) -->
+        <div class="tarjeta">
+          <div class="estaciones-encabezado">
+            <h2 class="titulo-tarjeta">Por estación</h2>
+            <span id="estaciones-mes"></span>
+          </div>
+          <p class="leyenda">
+            <span><i class="punto punto-verde"></i>Cuadrados</span>
+            <span><i class="punto punto-naranja"></i>Descuadres</span>
+          </p>
+          <ul id="lista-estaciones" class="lista-estaciones"></ul>
+          <p id="aviso-deslizar" class="aviso-deslizar" hidden>Desliza para ver más estaciones →</p>
+        </div>
       </section>
 
-      <!-- ================= REGISTRAR TURNO ================= -->
-      <section class="tarjeta">
-        <!-- El título cambia a "Editar turno" al tocar el lápiz de un turno -->
-        <h2 class="titulo-tarjeta" id="titulo-formulario">Registrar turno</h2>
+      <!-- =============== VISTA: TURNOS =============== -->
+      <section class="vista" data-vista="turnos" hidden>
+        <div class="tarjeta">
+          <h2 class="titulo-tarjeta" id="titulo-formulario">Registrar turno</h2>
 
-        <form id="form-turno">
-          <!-- Fecha y estación lado a lado -->
-          <div class="fila-dos">
+          <form id="form-turno" novalidate>
+            <div class="fila-dos">
+              <label class="campo">
+                <span>Fecha</span>
+                <!-- En celular, encima se muestra .fecha-texto con formato dd/mm/aaaa -->
+                <span class="campo-fecha">
+                  <input class="fecha" type="date" name="fecha" required />
+                  <span class="fecha-texto" aria-hidden="true"></span>
+                </span>
+              </label>
+              <label class="campo">
+                <span>Estación</span>
+                <!-- Las opciones las crea JavaScript desde ESTACIONES (servicios/turnos.js) -->
+                <select class="estaciones" name="estacion" required></select>
+              </label>
+            </div>
+
+            <fieldset class="grupo">
+              <legend>Tipo de turno</legend>
+              <div class="segmentado">
+                <label class="opcion"><input type="radio" name="turno" value="fijo" checked /><span>Fijo</span></label>
+                <label class="opcion"><input type="radio" name="turno" value="reserva" /><span>Reserva</span></label>
+              </div>
+            </fieldset>
+
+            <fieldset class="grupo">
+              <legend>Resultado del cuadre</legend>
+              <div class="resultado">
+                <label class="opcion">
+                  <input type="radio" name="resultado" value="cuadrada" required />
+                  <span class="opcion-cuadrada">Cuadrada</span>
+                </label>
+                <label class="opcion">
+                  <input type="radio" name="resultado" value="no-cuadrada" />
+                  <span class="opcion-no-cuadrada">No cuadrada</span>
+                </label>
+              </div>
+            </fieldset>
+
+            <!-- NUEVO: solo aparece al elegir "No cuadrada" (turnos.js) -->
+            <div class="bloque-diferencia" id="bloque-diferencia" hidden>
+              <fieldset class="grupo">
+                <legend>Diferencia</legend>
+                <div class="segmentado">
+                  <label class="opcion"><input type="radio" name="tipoDiferencia" value="faltante" /><span>Faltante</span></label>
+                  <label class="opcion"><input type="radio" name="tipoDiferencia" value="sobrante" /><span>Sobrante</span></label>
+                </div>
+              </fieldset>
+              <label class="campo">
+                <span>Monto</span>
+                <span class="campo-monto">
+                  <span aria-hidden="true">$</span>
+                  <!-- inputmode="decimal" abre el teclado de números con coma -->
+                  <input type="text" name="monto" inputmode="decimal" placeholder="0,45" autocomplete="off" />
+                </span>
+              </label>
+              <p class="aviso-revisar" id="aviso-revisar" hidden>
+                Este monto se tomó de tu observación. Revísalo y guarda para confirmarlo.
+              </p>
+
+              <!-- OT de este turno (solo al editar un turno ya guardado) -->
+              <div class="ot-del-turno" id="ot-del-turno" hidden>
+                <span class="campo-titulo">OT de este turno</span>
+                <ul class="lista-simple" id="lista-ot-turno"></ul>
+                <a class="boton-secundario boton-ancho" id="agregar-ot-turno" href="#ot/nueva">+ Agregar OT</a>
+              </div>
+            </div>
+
             <label class="campo">
-              <span>Fecha</span>
-              <!-- El <input> sigue siendo el calendario nativo.
-                   En celular, encima se muestra .fecha-texto con formato dd/mm/aaaa
-                   (lo escribe JavaScript: función mostrarFechaElegida) -->
-              <span class="campo-fecha">
-                <input class="fecha" type="date" name="fecha" required />
-                <span class="fecha-texto" aria-hidden="true"></span>
+              <span>Observación (opcional)</span>
+              <input type="text" name="observacion" maxlength="100" placeholder="Una nota corta" />
+            </label>
+
+            <!-- Foto del comprobante de depósito (opcional). Dos <input type="file">
+                 ocultos: "Tomar foto" abre la cámara y "Galería" las fotos guardadas. -->
+            <div class="campo campo-comprobante">
+              <span>Foto del comprobante de depósito (opcional)</span>
+              <img id="comprobante-previa" class="comprobante-previa" alt="Vista previa del comprobante" hidden />
+              <div class="botones-foto">
+                <button type="button" class="boton-secundario" id="camara-comprobante">
+                  <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                    <circle cx="12" cy="13" r="4" />
+                  </svg>
+                  <span>Tomar foto</span>
+                </button>
+                <button type="button" class="boton-secundario" id="elegir-comprobante">
+                  <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <path d="M21 15l-5-5L5 21" />
+                  </svg>
+                  <span>Galería</span>
+                </button>
+                <button type="button" class="boton-secundario" id="quitar-comprobante" hidden>Quitar foto</button>
+              </div>
+              <input type="file" id="input-comprobante" accept="image/*" hidden />
+              <input type="file" id="camara-input-comprobante" accept="image/*" capture="environment" hidden />
+            </div>
+
+            <p class="mensaje-error" id="error-turno" role="alert" hidden></p>
+            <button type="submit" class="boton-principal" id="boton-guardar">Guardar turno</button>
+            <button type="button" class="boton-texto" id="cancelar-edicion" hidden>Cancelar edición</button>
+          </form>
+        </div>
+
+        <div class="tarjeta">
+          <div class="historial-encabezado">
+            <h2 class="titulo-tarjeta">Historial</h2>
+            <button type="button" class="boton-secundario" data-exportar-excel>
+              <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Excel
+            </button>
+          </div>
+          <div class="historial-mes-fila">
+            <div class="eficiencia-mes selector-mes">
+              <button type="button" data-mes="-1" aria-label="Mes anterior">‹</button>
+              <span class="mes-texto" aria-live="polite"></span>
+              <button type="button" data-mes="1" aria-label="Mes siguiente">›</button>
+            </div>
+          </div>
+          <div class="filtros" id="filtros-turnos">
+            <button type="button" class="filtro activo" data-filtro="todos">Todos</button>
+            <button type="button" class="filtro" data-filtro="cuadrados">Cuadres</button>
+            <button type="button" class="filtro" data-filtro="descuadrados">Descuadres</button>
+          </div>
+          <ul id="lista-historial" class="lista-historial"></ul>
+        </div>
+      </section>
+
+      <!-- =============== VISTA: LISTA DE OT =============== -->
+      <section class="vista" data-vista="ot" hidden>
+        <div class="resumen-tres" id="ot-resumen"></div>
+        <a class="boton-principal boton-enlace" href="#ot/nueva">+ Nueva OT</a>
+        <div class="tarjeta">
+          <div class="historial-mes-fila">
+            <div class="eficiencia-mes selector-mes">
+              <button type="button" data-mes="-1" aria-label="Mes anterior">‹</button>
+              <span class="mes-texto" aria-live="polite"></span>
+              <button type="button" data-mes="1" aria-label="Mes siguiente">›</button>
+            </div>
+          </div>
+          <div class="filtros" id="filtros-ot">
+            <button type="button" class="filtro activo" data-filtro="todas">Todas</button>
+            <button type="button" class="filtro" data-filtro="pendiente">Pendientes</button>
+            <button type="button" class="filtro" data-filtro="valida">Válidas</button>
+            <button type="button" class="filtro" data-filtro="no-valida">No válidas</button>
+          </div>
+          <ul class="lista-ot" id="lista-ot"></ul>
+        </div>
+      </section>
+
+      <!-- =============== VISTA: NUEVA / EDITAR OT =============== -->
+      <section class="vista" data-vista="ot-form" hidden>
+        <div class="tarjeta">
+          <a class="enlace-volver" href="#ot">‹ Volver a las OT</a>
+          <h2 class="titulo-tarjeta" id="titulo-form-ot">Nueva OT</h2>
+          <form id="form-ot" class="formulario" novalidate>
+            <div class="fila-dos">
+              <label class="campo">
+                <span>Número de OT</span>
+                <span class="campo-prefijo">
+                  <span aria-hidden="true">OT-</span>
+                  <input type="text" name="numero" inputmode="numeric" maxlength="20" placeholder="123456" autocomplete="off" />
+                </span>
+              </label>
+              <label class="campo">
+                <span>Fecha</span>
+                <input type="date" name="fecha" required />
+              </label>
+            </div>
+
+            <label class="campo">
+              <span>Turno al que pertenece</span>
+              <!-- Las opciones (turnos del mes de la fecha) las arma ot.js -->
+              <select name="turnoId"></select>
+            </label>
+            <p class="campo-ayuda" id="ot-turno-ayuda"></p>
+
+            <fieldset class="grupo">
+              <legend>Tipo de incidencia</legend>
+              <div class="chips" id="chips-tipo-ot"></div>
+            </fieldset>
+
+            <fieldset class="grupo">
+              <legend>Diferencia</legend>
+              <div class="segmentado">
+                <label class="opcion"><input type="radio" name="tipoDiferencia" value="faltante" /><span>Faltante</span></label>
+                <label class="opcion"><input type="radio" name="tipoDiferencia" value="sobrante" /><span>Sobrante</span></label>
+              </div>
+            </fieldset>
+
+            <label class="campo">
+              <span>Monto</span>
+              <span class="campo-monto">
+                <span aria-hidden="true">$</span>
+                <input type="text" name="monto" inputmode="decimal" placeholder="0,45" autocomplete="off" />
               </span>
             </label>
 
             <label class="campo">
-              <span>Estación</span>
-              <!-- Las opciones las crea JavaScript desde el arreglo "estaciones" -->
-              <select class="estaciones" name="estacion" required></select>
+              <span>Motivo (como lo escribió el OR)</span>
+              <textarea name="motivo" rows="3" maxlength="300"></textarea>
             </label>
-          </div>
 
-          <!-- Tipo de turno: Fijo y Reserva -->
-          <fieldset class="grupo">
-            <legend>Tipo de turno</legend>
-            <div class="segmentado">
-              <!-- El radio real se oculta con CSS; lo que se ve es el <span> -->
-              <label class="opcion">
-                <input type="radio" name="turno" value="fijo" checked />
-                <span>Fijo</span>
-              </label>
-              <label class="opcion">
-                <input type="radio" name="turno" value="reserva" />
-                <span>Reserva</span>
-              </label>
-            </div>
-          </fieldset>
-
-          <!-- Resultado: 2 botones grandes -->
-          <fieldset class="grupo">
-            <legend>Resultado del cuadre</legend>
-            <div class="resultado">
-              <label class="opcion">
-                <input
-                  type="radio"
-                  name="resultado"
-                  value="cuadrada"
-                  required
-                />
-                <span class="opcion-cuadrada">Cuadrada</span>
-              </label>
-              <label class="opcion">
-                <input type="radio" name="resultado" value="no-cuadrada" />
-                <span class="opcion-no-cuadrada">No cuadrada</span>
-              </label>
-            </div>
-          </fieldset>
-
-          <label class="campo">
-            <span>Código OT / Observación</span>
-            <input
-              type="text"
-              name="observacion"
-              maxlength="100"
-              placeholder="Ej: OT-123456 o una descripción corta"
-            />
-          </label>
-
-          <!-- Foto del comprobante de depósito (opcional).
-               Hay DOS <input type="file"> ocultos y cada botón abre uno:
-               - "Tomar foto": capture="environment" abre directo la cámara
-                 de atrás del celular para tomar la foto en ese momento.
-               - "Galería": elige una foto que ya está en el celular.
-               La foto se guarda en el celular (IndexedDB), no en internet. -->
-          <div class="campo campo-comprobante">
-            <span>Foto del comprobante de depósito (opcional)</span>
-            <img id="comprobante-previa" class="comprobante-previa"
-                 alt="Vista previa del comprobante" hidden />
-            <div class="botones-foto">
-              <button type="button" class="boton-secundario" id="camara-comprobante">
-                <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                  <circle cx="12" cy="13" r="4" />
-                </svg>
-                <span>Tomar foto</span>
-              </button>
-              <button type="button" class="boton-secundario" id="elegir-comprobante">
-                <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <circle cx="8.5" cy="8.5" r="1.5" />
-                  <path d="M21 15l-5-5L5 21" />
-                </svg>
-                <span>Galería</span>
-              </button>
-              <button type="button" class="boton-secundario" id="quitar-comprobante" hidden>
-                Quitar foto
-              </button>
-            </div>
-            <input type="file" id="input-comprobante" accept="image/*" hidden />
-            <input type="file" id="camara-input-comprobante" accept="image/*"
-                   capture="environment" hidden />
-          </div>
-
-          <button type="submit" class="boton-principal" id="boton-guardar">Guardar turno</button>
-          <!-- Solo se ve mientras se edita un turno -->
-          <button type="button" class="boton-texto" id="cancelar-edicion" hidden>
-            Cancelar edición
-          </button>
-        </form>
-      </section>
-
-      <!-- ================= CUADRES Y DESCUADRES POR ESTACIÓN ================= -->
-      <!-- Gráfico de barras verticales del MES que se ve arriba en "Eficiencia del mes".
-           JavaScript lo dibuja (función mostrarPorEstacion) y se actualiza solo
-           al guardar, eliminar o cambiar de mes. -->
-      <section class="tarjeta">
-        <div class="estaciones-encabezado">
-          <h2 class="titulo-tarjeta">Por estación</h2>
-          <span id="estaciones-mes"></span>
+            <p class="aviso aviso-pendiente" id="aviso-ot-nueva">
+              Se guarda como <strong>Pendiente</strong>. Pregunta a tu coordinador si es válida y
+              márcala desde el detalle de la OT.
+            </p>
+            <p class="mensaje-error" id="error-ot" role="alert" hidden></p>
+            <button type="submit" class="boton-principal" id="guardar-ot">Guardar OT</button>
+            <a class="boton-texto boton-enlace" href="#ot" id="cancelar-ot">Cancelar</a>
+          </form>
         </div>
-        <!-- Leyenda de colores -->
-        <p class="leyenda">
-          <span><i class="punto punto-verde"></i>Cuadrados</span>
-          <span><i class="punto punto-naranja"></i>Descuadres</span>
-        </p>
-        <ul id="lista-estaciones" class="lista-estaciones"></ul>
-        <!-- Solo aparece cuando hay más estaciones de las que entran -->
-        <p id="aviso-deslizar" class="aviso-deslizar" hidden>Desliza para ver más estaciones →</p>
       </section>
 
-      <!-- ================= HISTORIAL ================= -->
-      <section class="tarjeta">
-        <div class="historial-encabezado">
+      <!-- =============== VISTA: DETALLE DE OT =============== -->
+      <section class="vista" data-vista="ot-detalle" hidden>
+        <div class="tarjeta">
+          <a class="enlace-volver" href="#ot">‹ Volver a las OT</a>
+          <div class="fila-separada">
+            <span class="etiqueta" id="detalle-estado"></span>
+            <strong class="monto-grande" id="detalle-monto"></strong>
+          </div>
+          <p class="detalle-motivo" id="detalle-motivo"></p>
+          <dl class="datos-dos" id="detalle-datos"></dl>
+          <a class="enlace-tarjeta" id="detalle-turno" href="#turnos"></a>
+          <div class="fila-botones">
+            <a class="boton-secundario" id="detalle-editar" href="#ot">Editar</a>
+            <button type="button" class="boton-secundario boton-peligro" id="detalle-eliminar">Eliminar</button>
+          </div>
+        </div>
+
+        <div class="tarjeta tarjeta-accion">
+          <h2 class="titulo-tarjeta">Respuesta del coordinador</h2>
+          <form id="form-estado" class="formulario" novalidate>
+            <label class="campo">
+              <span>Coordinador que respondió</span>
+              <input type="text" name="coordinador" maxlength="60" placeholder="Nombre del coordinador" />
+            </label>
+            <label class="campo">
+              <span>Nota (opcional)</span>
+              <input type="text" name="nota" maxlength="150" placeholder="Ej: se revisó la CashToday" />
+            </label>
+            <p class="mensaje-error" id="error-estado" role="alert" hidden></p>
+            <div class="fila-dos">
+              <button type="submit" class="boton-estado boton-valida" value="valida">✓ Válida</button>
+              <button type="submit" class="boton-estado boton-no-valida" value="no-valida">✕ No válida</button>
+            </div>
+            <button type="submit" class="boton-texto" value="pendiente" id="volver-pendiente" hidden>Volver a pendiente</button>
+          </form>
+          <p class="campo-ayuda">
+            Válida = no se descuenta. No válida = entra en Descuentos. Si el coordinador cambia
+            su respuesta, puedes volver a marcarla: queda en el historial.
+          </p>
+        </div>
+
+        <div class="tarjeta">
           <h2 class="titulo-tarjeta">Historial</h2>
-          <button type="button" id="exportar-excel" class="boton-secundario">
-            <svg
-              class="icono"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Exportar Excel
-          </button>
+          <ol class="linea-tiempo" id="detalle-historial"></ol>
         </div>
+      </section>
 
-        <!-- Selector de mes del historial: igual al de "Eficiencia del mes"
-             y van juntos (si cambias uno, cambia el otro). Así no hay que
-             subir para cambiar de mes. -->
+      <!-- =============== VISTA: DESCUENTOS =============== -->
+      <section class="vista" data-vista="descuentos" hidden>
         <div class="historial-mes-fila">
-          <div class="eficiencia-mes">
-            <button type="button" id="historial-mes-anterior" aria-label="Mes anterior">
-              ‹
-            </button>
-            <span id="historial-mes" aria-live="polite">Oct 2026</span>
-            <button type="button" id="historial-mes-siguiente" aria-label="Mes siguiente">
-              ›
-            </button>
+          <div class="eficiencia-mes selector-mes">
+            <button type="button" data-mes="-1" aria-label="Mes anterior">‹</button>
+            <span class="mes-texto" aria-live="polite"></span>
+            <button type="button" data-mes="1" aria-label="Mes siguiente">›</button>
           </div>
         </div>
 
-        <!-- Filtros. JavaScript mueve la clase "activo" al botón elegido
-             (función activarFiltro) -->
-        <div class="filtros">
-          <button type="button" class="filtro activo" data-filtro="todos">
-            Todos
-          </button>
-          <button type="button" class="filtro" data-filtro="cuadrados">
-            Cuadres
-          </button>
-          <button type="button" class="filtro" data-filtro="descuadrados">
-            Descuadres
-          </button>
+        <div class="tarjeta tarjeta-saldo">
+          <p class="monto-etiqueta" id="desc-saldo-titulo">Saldo a descontar</p>
+          <strong class="monto-gigante rojo" id="desc-saldo">$0,00</strong>
+          <p class="campo-ayuda" id="desc-saldo-ayuda"></p>
         </div>
 
-        <!-- Lista vacía. La llena JavaScript con los turnos DEL MES que se
-             está viendo (función mostrarHistorial) -->
-        <ul id="lista-historial" class="lista-historial"></ul>
+        <div class="tarjeta">
+          <h2 class="titulo-tarjeta">Resumen del mes</h2>
+          <div class="barra-partes" id="desc-barra" aria-hidden="true"></div>
+          <div class="mini-dos mini-cuatro">
+            <div><span>A descontar</span><strong class="rojo" id="desc-descontar">$0,00</strong><small>sin OT u OT no válida</small></div>
+            <div><span>En revisión</span><strong class="amarillo" id="desc-revision">$0,00</strong><small>OT pendiente</small></div>
+            <div><span>Justificado</span><strong class="verde" id="desc-justificado">$0,00</strong><small>OT válida</small></div>
+            <div><span>Ya descontado</span><strong id="desc-aplicado">$0,00</strong><small>registrado en rol</small></div>
+          </div>
+          <p class="aviso aviso-pendiente" id="desc-sin-monto" hidden></p>
+        </div>
+
+        <div class="tarjeta">
+          <h2 class="titulo-tarjeta">Descuadres del mes</h2>
+          <ul class="lista-detalle" id="desc-detalle"></ul>
+        </div>
+
+        <div class="tarjeta">
+          <h2 class="titulo-tarjeta">Descuentos aplicados en rol</h2>
+          <ul class="lista-detalle" id="desc-aplicados"></ul>
+          <button type="button" class="boton-principal" id="registrar-descuento">Registrar descuento aplicado</button>
+          <button type="button" class="boton-secundario boton-ancho" data-exportar-excel>Exportar Excel del mes</button>
+        </div>
       </section>
     </main>
 
     <!-- ================= PIE DE PÁGINA ================= -->
     <footer class="pie">
-      <!-- Aviso de privacidad: recuerda dónde se guardan los datos -->
       <p class="pie-privacidad">
-        <svg
-          class="icono"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <rect x="3" y="11" width="18" height="11" rx="2" />
           <path d="M7 11V7a5 5 0 0 1 10 0v4" />
         </svg>
         Tus turnos se guardan solo en este dispositivo
       </p>
-      <!-- El año lo escribe JavaScript (bloque PIE DE PÁGINA) para que cambie solo cada año -->
       <p>
         © <span id="anio-actual">2026</span> Luis Alberto Guillén Yaucan ·
-        v<span class="version-app">1.4.11</span> ·
-        <a
-          href="https://github.com/Alberthluiiz/Control-de-Cuadres-Info"
-          target="_blank"
-          rel="noopener"
-          >GitHub</a
-        >
+        v<span class="version-app">1.5.0</span> ·
+        <a href="https://github.com/Alberthluiiz/PWA-Control" target="_blank" rel="noopener">GitHub</a>
       </p>
     </footer>
+
+    <!-- ================= NAVEGACIÓN INFERIOR ================= -->
+    <!-- Enlaces con "#": cambian la dirección sin recargar la página.
+         navegacion.js escucha el cambio y muestra la vista que toca. -->
+    <nav class="nav-inferior" aria-label="Secciones">
+      <a href="#inicio" data-nav="inicio">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" /></svg>
+        Inicio
+      </a>
+      <a href="#turnos" data-nav="turnos">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
+        Turnos
+      </a>
+      <a href="#ot" data-nav="ot">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3" /></svg>
+        OT
+        <span class="nav-contador" id="nav-ot-contador" hidden></span>
+      </a>
+      <a href="#descuentos" data-nav="descuentos">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M15 9.5c0-1.4-1.3-2.5-3-2.5s-3 1-3 2.3c0 3 6 1.7 6 4.7 0 1.3-1.3 2.5-3 2.5s-3-1.1-3-2.5M12 5.5v13" /></svg>
+        Descuentos
+      </a>
+      <button type="button" id="nav-perfil">
+        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 4-6 8-6s8 2 8 6" /></svg>
+        Perfil
+      </button>
+    </nav>
+
     <!-- ================= CARÁTULA DE INICIO ================= -->
-    <!-- <dialog> es una ventana que se abre ENCIMA de la página.
-         Esta ocupa toda la pantalla (como el inicio de Facebook) y aparece
-         cuando nadie tiene la sesión abierta. Los botones de cada persona
-         los crea JavaScript (función abrirEntrar). -->
     <dialog id="dialogo-entrar" class="caratula" aria-labelledby="caratula-titulo">
       <div class="caratula-contenido">
         <button type="button" class="boton-tema" aria-label="Cambiar entre modo claro y oscuro">
-            <!-- Sol: se ve en modo oscuro -->
-            <svg class="icono icono-sol" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="4" />
-              <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
-            </svg>
-            <!-- Luna: se ve en modo claro -->
-            <svg class="icono icono-luna" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
-            </svg>
-          </button>
+          <svg class="icono icono-sol" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+          </svg>
+          <svg class="icono icono-luna" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
+          </svg>
+        </button>
 
-        <!-- Ilustración: caja registradora con recibo, monedas, billete
-             y un visto verde de "cuadrado". Dibujada con SVG (sin imágenes),
-             así pesa muy poco, se ve nítida y cambia de color con el tema. -->
+        <!-- Ilustración: caja registradora con recibo, monedas, billete y un visto verde -->
         <svg class="caratula-ilustracion" viewBox="0 0 240 190" aria-hidden="true">
           <circle class="ilus-fondo" cx="120" cy="100" r="88" />
-          <!-- Recibo saliendo de la caja -->
           <rect class="ilus-papel" x="128" y="22" width="44" height="58" rx="4" />
           <line class="ilus-linea" x1="137" y1="36" x2="163" y2="36" />
           <line class="ilus-linea" x1="137" y1="48" x2="158" y2="48" />
           <line class="ilus-linea" x1="137" y1="60" x2="163" y2="60" />
-          <!-- Caja registradora -->
           <rect class="ilus-cuerpo" x="58" y="62" width="124" height="66" rx="10" />
           <rect class="ilus-pantalla" x="70" y="72" width="56" height="26" rx="5" />
           <text class="ilus-pantalla-texto" x="98" y="91" text-anchor="middle">$ OK</text>
@@ -393,14 +540,11 @@
           <rect class="ilus-tecla" x="70" y="106" width="100" height="8" rx="3" />
           <rect class="ilus-oscuro" x="48" y="128" width="144" height="26" rx="6" />
           <rect class="ilus-tecla" x="104" y="138" width="32" height="5" rx="2.5" />
-          <!-- Billete y monedas -->
           <rect class="ilus-billete" x="20" y="134" width="48" height="26" rx="4" transform="rotate(-12 44 147)" />
           <circle class="ilus-moneda" cx="196" cy="156" r="13" />
           <circle class="ilus-moneda" cx="214" cy="142" r="11" />
-          <!-- Visto verde: caja cuadrada -->
           <circle class="ilus-check" cx="186" cy="40" r="20" />
-          <path d="M176 40l7 7 13-14" fill="none" stroke="#fff" stroke-width="5"
-                stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M176 40l7 7 13-14" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
 
         <p class="caratula-marca">Área de recaudo</p>
@@ -410,15 +554,11 @@
         <section class="tarjeta caratula-tarjeta">
           <h2 id="entrar-titulo">¿Quién va a registrar?</h2>
           <div id="lista-usuarios" class="lista-usuarios"></div>
-          <button type="button" class="boton-principal" id="agregar-usuario">
-            Crear mi perfil
-          </button>
+          <button type="button" class="boton-principal" id="agregar-usuario">Crear mi perfil</button>
         </section>
 
-        <!-- Versión y autor. El número de versión lo escribe JavaScript
-             desde la constante VERSION_APP (bloque VERSIÓN DE LA APP) -->
         <p class="caratula-creditos">
-          Versión <span class="version-app">1.4.11</span><br />
+          Versión <span class="version-app">1.5.0</span><br />
           Desarrollado por <strong>Luis Alberto Guillén Yaucan</strong>
         </p>
       </div>
@@ -427,51 +567,23 @@
     <!-- ================= REGISTRO / EDITAR PERFIL ================= -->
     <dialog id="dialogo-registro" class="dialogo" aria-labelledby="registro-titulo">
       <form id="form-registro">
-        <!-- Vista previa: muestra la foto o las iniciales mientras se escribe.
-             Tocarla abre la galería/cámara para elegir una foto. -->
         <span class="avatar avatar-grande avatar-editable" id="avatar-previa" aria-hidden="true">?</span>
         <h2 id="registro-titulo">Bienvenido</h2>
-        <p class="dialogo-texto" id="registro-texto">
-          Escribe tu nombre o un nickname. La foto es opcional.
-        </p>
-
-        <!-- Foto opcional. Los <input type="file"> reales están ocultos;
-             los botones los abren. accept="image/*" = solo imágenes.
-             capture="user" abre la cámara de adelante (para una selfie). -->
+        <p class="dialogo-texto" id="registro-texto">Escribe tu nombre o un nickname. La foto es opcional.</p>
         <div class="botones-foto">
-          <button type="button" class="boton-secundario" id="tomar-foto">
-            Tomar foto
-          </button>
-          <button type="button" class="boton-secundario" id="elegir-foto">
-            Galería
-          </button>
-          <button type="button" class="boton-secundario" id="quitar-foto" hidden>
-            Quitar foto
-          </button>
+          <button type="button" class="boton-secundario" id="tomar-foto">Tomar foto</button>
+          <button type="button" class="boton-secundario" id="elegir-foto">Galería</button>
+          <button type="button" class="boton-secundario" id="quitar-foto" hidden>Quitar foto</button>
         </div>
         <input type="file" id="input-foto" accept="image/*" hidden />
         <input type="file" id="camara-input-foto" accept="image/*" capture="user" hidden />
-
         <label class="campo">
           <span>Nombre o nickname</span>
-          <input
-            type="text"
-            name="nombre"
-            id="input-nombre"
-            minlength="2"
-            maxlength="30"
-            autocomplete="nickname"
-            placeholder="Ej: Luis Guillén"
-            required
-          />
+          <input type="text" name="nombre" id="input-nombre" minlength="2" maxlength="30"
+                 autocomplete="nickname" placeholder="Ej: Luis Guillén" required />
         </label>
-
-        <button type="submit" class="boton-principal" id="boton-registro">
-          Empezar
-        </button>
-        <button type="button" class="boton-texto" id="cancelar-registro">
-          Cancelar
-        </button>
+        <button type="submit" class="boton-principal" id="boton-registro">Empezar</button>
+        <button type="button" class="boton-texto" id="cancelar-registro">Cancelar</button>
       </form>
     </dialog>
 
@@ -480,61 +592,36 @@
       <span class="avatar avatar-grande" id="avatar-perfil" aria-hidden="true"></span>
       <h2 id="perfil-titulo"></h2>
       <p class="dialogo-texto" id="perfil-desde"></p>
-      <button type="button" class="boton-principal" id="editar-perfil">
-        Editar nombre o foto
-      </button>
-      <!-- RECORDATORIOS (OPCIONALES): cada botón crea un archivo de calendario
-           (.ics) con JavaScript (bloque RECORDATORIOS en app.js). El celular lo
-           reconoce como evento y PREGUNTA si se quiere agregar: quien no quiera
-           avisos, simplemente no lo toca (o lo borra después en su calendario).
-           El calendario avisa aunque la app esté cerrada y no haya internet.
-           Primero se elige cuánto tiempo debe avisar: 1 semana o 1 mes. -->
+      <button type="button" class="boton-principal" id="editar-perfil">Editar nombre o foto</button>
+
+      <!-- RECORDATORIOS (OPCIONALES): ver pantallas/recordatorios.js -->
       <section class="recordatorios">
         <h3>Recordatorios <span>(opcionales)</span></h3>
-
         <fieldset class="grupo">
           <legend>Avisar durante</legend>
-          <!-- Mismo estilo que "Tipo de turno". value = número de días -->
           <div class="segmentado">
-            <label class="opcion">
-              <input type="radio" name="duracion-recordatorio" value="7" />
-              <span>1 semana</span>
-            </label>
-            <label class="opcion">
-              <input type="radio" name="duracion-recordatorio" value="30" checked />
-              <span>1 mes</span>
-            </label>
+            <label class="opcion"><input type="radio" name="duracion-recordatorio" value="7" /><span>1 semana</span></label>
+            <label class="opcion"><input type="radio" name="duracion-recordatorio" value="30" checked /><span>1 mes</span></label>
           </div>
         </fieldset>
-
         <fieldset class="grupo">
           <legend>Calendario</legend>
-          <!-- Google = abre Google Calendar con el aviso listo para guardar.
-               Otro = descarga un archivo .ics (iPhone, Outlook, Samsung...) -->
           <div class="segmentado">
-            <label class="opcion">
-              <input type="radio" name="calendario-recordatorio" value="google" checked />
-              <span>Google</span>
-            </label>
-            <label class="opcion">
-              <input type="radio" name="calendario-recordatorio" value="archivo" />
-              <span>Otro (iPhone)</span>
-            </label>
+            <label class="opcion"><input type="radio" name="calendario-recordatorio" value="google" checked /><span>Google</span></label>
+            <label class="opcion"><input type="radio" name="calendario-recordatorio" value="archivo" /><span>Otro (iPhone)</span></label>
           </div>
         </fieldset>
-
-        <!-- data-recordatorio dice cuál de los avisos crear (ver "tiposRecordatorio" en app.js) -->
         <button type="button" class="boton-secundario boton-ancho" data-recordatorio="turno">
-          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="12" cy="13" r="8" />
             <path d="M12 9v4l2 2M5 3L2 6M22 6l-3-3" />
           </svg>
           12:00 · Aviso de turno
         </button>
         <button type="button" class="boton-secundario boton-ancho" data-recordatorio="registro">
-          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="12" cy="13" r="8" />
             <path d="M12 9v4l2 2M5 3L2 6M22 6l-3-3" />
           </svg>
@@ -548,14 +635,12 @@
         </p>
       </section>
 
-      <!-- Copia de seguridad: guarda TODO lo de este celular (turnos de
-           todas las personas, perfiles y fotos de comprobantes) en un archivo.
-           Restaurar SOLO AGREGA lo que falta: nunca borra ni cambia lo que ya hay. -->
+      <!-- Copia de seguridad: ver pantallas/copia.js -->
       <section class="recordatorios">
         <h3>Copia de seguridad</h3>
         <button type="button" class="boton-secundario boton-ancho" id="guardar-copia">
-          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
             <polyline points="7 10 12 15 17 10" />
             <line x1="12" y1="15" x2="12" y2="3" />
@@ -563,44 +648,59 @@
           Guardar copia
         </button>
         <button type="button" class="boton-secundario boton-ancho" id="restaurar-copia">
-          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
             <polyline points="17 8 12 3 7 8" />
             <line x1="12" y1="3" x2="12" y2="15" />
           </svg>
           Restaurar copia
         </button>
-        <!-- accept: solo archivos .json (el formato de la copia) -->
         <input type="file" id="input-copia" accept=".json,application/json" hidden />
         <p class="dialogo-ayuda">
-          "Guardar copia" descarga un archivo con los turnos, las personas y las
-          fotos de este celular. En otro celular o en otra dirección de la app,
-          "Restaurar copia" agrega lo que falta sin borrar nada.
+          "Guardar copia" descarga un archivo con los turnos, las OT, los descuentos,
+          las personas y las fotos de este celular. En otro celular o en otra dirección
+          de la app, "Restaurar copia" agrega lo que falta sin borrar nada.
         </p>
       </section>
-      <button type="button" class="boton-secundario boton-ancho boton-salir" id="cerrar-sesion">
-        Cerrar sesión
-      </button>
-      <!-- Borra este perfil. Antes ofrece pasar sus turnos a otro perfil. -->
-      <button type="button" class="boton-texto boton-eliminar" id="eliminar-perfil">
-        Eliminar perfil
-      </button>
+      <button type="button" class="boton-secundario boton-ancho boton-salir" id="cerrar-sesion">Cerrar sesión</button>
+      <button type="button" class="boton-texto boton-eliminar" id="eliminar-perfil">Eliminar perfil</button>
       <button type="button" class="boton-texto" id="cerrar-perfil">Cerrar</button>
     </dialog>
 
     <!-- ================= VER COMPROBANTE ================= -->
-    <!-- Se abre al tocar "Ver comprobante" en un turno del historial -->
     <dialog id="dialogo-comprobante" class="dialogo" aria-labelledby="comprobante-titulo">
       <h2 id="comprobante-titulo">Comprobante de depósito</h2>
       <p class="dialogo-texto" id="comprobante-detalle"></p>
-      <img id="comprobante-imagen" class="comprobante-imagen"
-           alt="Foto del comprobante de depósito" />
-      <!-- Descarga la foto para enviarla por WhatsApp o guardarla en la galería -->
-      <a id="descargar-comprobante" class="boton-secundario boton-ancho" download>
-        Descargar foto
-      </a>
+      <img id="comprobante-imagen" class="comprobante-imagen" alt="Foto del comprobante de depósito" />
+      <a id="descargar-comprobante" class="boton-secundario boton-ancho" download>Descargar foto</a>
       <button type="button" class="boton-texto" id="cerrar-comprobante">Cerrar</button>
+    </dialog>
+
+    <!-- ================= REGISTRAR DESCUENTO APLICADO ================= -->
+    <dialog id="dialogo-descuento" class="dialogo" aria-labelledby="descuento-titulo">
+      <form id="form-descuento" class="formulario" novalidate>
+        <h2 id="descuento-titulo">Descuento aplicado</h2>
+        <p class="dialogo-texto" id="descuento-periodo"></p>
+        <label class="campo">
+          <span>Monto descontado</span>
+          <span class="campo-monto">
+            <span aria-hidden="true">$</span>
+            <input type="text" name="monto" inputmode="decimal" placeholder="0,45" autocomplete="off" />
+          </span>
+        </label>
+        <label class="campo">
+          <span>Fecha</span>
+          <input type="date" name="fecha" />
+        </label>
+        <label class="campo">
+          <span>Referencia (opcional)</span>
+          <input type="text" name="referencia" maxlength="60" placeholder="Ej: Rol de pagos de noviembre" />
+        </label>
+        <p class="mensaje-error" id="error-descuento" role="alert" hidden></p>
+        <button type="submit" class="boton-principal">Guardar</button>
+        <button type="button" class="boton-texto" id="cancelar-descuento">Cancelar</button>
+      </form>
     </dialog>
   </body>
 </html>

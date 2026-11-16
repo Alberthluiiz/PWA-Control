@@ -1272,3 +1272,662 @@ main {
   border-radius: 0.75rem;
   background: var(--fondo-1);
 }
+
+/* =========================================================
+   11. VERSIÓN 1.5.0: VISTAS, OT, DESCUENTOS Y NAVEGACIÓN
+   ========================================================= */
+
+/* --- Ayudas pequeñas que se usan en varias vistas --- */
+.naranja {
+  color: var(--naranja-texto);
+}
+.amarillo {
+  color: var(--amarillo);
+}
+.texto-suave {
+  color: var(--texto-suave);
+}
+.sin-margen {
+  margin: 0;
+}
+
+/* Dos cosas en una fila: una a la izquierda y otra a la derecha */
+.fila-separada {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Textarea con el mismo estilo que los inputs */
+.campo textarea {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--fondo-1);
+  border: 1px solid var(--borde);
+  border-radius: 0.75rem;
+  font: inherit;
+  color: inherit;
+  resize: vertical;
+}
+.campo textarea:focus {
+  outline: 2px solid var(--primario);
+  outline-offset: 1px;
+}
+
+.formulario {
+  display: grid;
+  gap: 1rem;
+}
+.formulario .boton-texto {
+  margin-top: 0;
+}
+
+.campo-titulo {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.9rem;
+  color: var(--texto-suave);
+}
+.campo-ayuda {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+}
+
+/* Mensaje de error debajo de un formulario */
+.mensaje-error {
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.75rem;
+  background: rgba(248, 113, 113, 0.12);
+  color: var(--rojo);
+  font-size: 0.85rem;
+}
+
+/* Avisos (amarillo = algo pendiente de hacer) */
+.aviso {
+  margin: 0.75rem 0 0;
+  padding: 0.7rem 0.9rem;
+  border-radius: 0.75rem;
+  font-size: 0.85rem;
+}
+.aviso-pendiente,
+.aviso-revisar {
+  background: rgba(251, 191, 36, 0.12);
+  color: var(--amarillo);
+}
+.aviso-revisar {
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.75rem;
+  font-size: 0.8rem;
+}
+
+/* Un <a> que se ve como botón: sin subrayado y centrado */
+.boton-enlace {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+}
+.vista > .boton-principal {
+  width: auto;
+  margin: 0 1rem;
+}
+a.boton-secundario {
+  justify-content: center;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* "Ver todas las OT →" */
+.enlace-ver,
+.enlace-volver {
+  display: inline-block;
+  color: var(--primario-texto);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.enlace-ver {
+  margin-top: 0.75rem;
+}
+.enlace-volver {
+  margin-bottom: 0.75rem;
+}
+
+/* Etiquetas de estado de OT (mismo estilo que .etiqueta-verde) */
+.etiqueta-pendiente {
+  background: rgba(251, 191, 36, 0.15);
+  color: var(--amarillo);
+}
+.etiqueta-valida {
+  background: rgba(52, 211, 153, 0.15);
+  color: var(--verde);
+}
+.etiqueta-no-valida {
+  background: rgba(248, 113, 113, 0.15);
+  color: var(--rojo);
+}
+a.etiqueta {
+  text-decoration: none;
+}
+
+/* --- Selector de mes en vistas sin encabezado propio --- */
+.vista > .historial-mes-fila {
+  margin: 1rem 1rem 0;
+}
+
+/* =========================================================
+   12. INICIO
+   ========================================================= */
+/* Rayita blanca de la meta sobre el anillo */
+.anillo-meta {
+  stroke: var(--texto);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+/* Bajo la meta, el anillo se pinta rojo */
+.anillo-progreso.bajo-meta {
+  stroke: var(--rojo);
+}
+
+/* Descuadres permitidos: un cuadrito por cada uno */
+.permitidos {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--borde);
+  font-size: 0.9rem;
+}
+.permitidos p {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+}
+.permitidos-barra {
+  display: flex;
+  gap: 0.3rem;
+  margin-top: 0.6rem;
+}
+.permitidos-barra span {
+  flex: 1;
+  height: 0.6rem;
+  border-radius: 0.2rem;
+  background: var(--borde);
+}
+.permitidos-barra span.usado {
+  background: var(--naranja);
+}
+.permitidos-barra span.pasado {
+  background: var(--rojo);
+}
+
+/* Tarjeta con borde amarillo (OT pendientes) */
+.tarjeta-aviso {
+  border-color: rgba(251, 191, 36, 0.45);
+}
+
+/* Lista sencilla: texto a la izquierda, monto a la derecha */
+.lista-simple,
+.lista-detalle,
+.lista-ot {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.lista-ot {
+  margin: 0;
+  gap: 0.75rem;
+}
+.item-simple {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.8rem;
+  background: var(--fondo-1);
+  border: 1px solid var(--borde);
+  border-radius: 0.75rem;
+  color: inherit;
+  text-decoration: none;
+}
+a.item-simple:hover {
+  border-color: var(--primario);
+}
+.item-simple > span:first-child {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0; /* deja que el texto largo se corte en vez de desbordar */
+}
+.item-simple small {
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+}
+.item-simple .etiqueta {
+  justify-self: start;
+}
+.monto-derecha {
+  display: grid;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Montos grandes */
+.monto-etiqueta {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+.monto-grande {
+  display: block;
+  font-size: 1.8rem;
+  line-height: 1.2;
+}
+.monto-gigante {
+  display: block;
+  font-size: 2.6rem;
+  line-height: 1.2;
+  margin: 0.25rem 0;
+}
+
+/* Dos (o cuatro) cajitas de montos */
+.mini-dos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+.mini-dos > div {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.7rem;
+  background: var(--fondo-1);
+  border-radius: 0.75rem;
+}
+.mini-dos span,
+.mini-dos small {
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+}
+.mini-dos strong {
+  font-size: 1.1rem;
+}
+
+/* =========================================================
+   13. TURNOS: bloque de diferencia y monto
+   ========================================================= */
+.bloque-diferencia {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px dashed var(--borde);
+  border-radius: 0.75rem;
+}
+
+/* Input con "$" u "OT-" pegado a la izquierda */
+.campo-monto,
+.campo-prefijo {
+  display: flex;
+  align-items: center;
+  background: var(--fondo-1);
+  border: 1px solid var(--borde);
+  border-radius: 0.75rem;
+}
+.campo-monto > span,
+.campo-prefijo > span {
+  padding-left: 0.75rem;
+  color: var(--texto-suave);
+  font-weight: 600;
+}
+.campo .campo-monto input,
+.campo .campo-prefijo input {
+  border: none;
+  background: none;
+  padding-left: 0.35rem;
+}
+.campo-monto:focus-within,
+.campo-prefijo:focus-within {
+  outline: 2px solid var(--primario);
+  outline-offset: 1px;
+}
+.campo-monto input:focus,
+.campo-prefijo input:focus {
+  outline: none;
+}
+
+.ot-del-turno .lista-simple {
+  margin: 0 0 0.75rem;
+}
+
+/* Fila de monto + etiquetas dentro de un registro del historial */
+.registro-fila {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+}
+
+/* =========================================================
+   14. OT
+   ========================================================= */
+/* Tres cajitas de resumen: pendientes, válidas, no válidas */
+.resumen-tres {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin: 1rem;
+}
+.resumen-caja {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.75rem;
+  background: var(--tarjeta);
+  border: 1px solid var(--borde);
+  border-radius: 1rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+}
+.resumen-caja strong {
+  font-size: 1.5rem;
+}
+
+/* Cada OT de la lista: borde de color a la izquierda según su estado */
+.item-ot {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.8rem 0.9rem;
+  background: var(--fondo-1);
+  border: 1px solid var(--borde);
+  border-left: 4px solid var(--amarillo);
+  border-radius: 0.75rem;
+  color: inherit;
+  text-decoration: none;
+}
+.item-ot:hover {
+  border-color: var(--primario);
+}
+.item-ot-valida {
+  border-left-color: var(--verde);
+}
+.item-ot-no-valida {
+  border-left-color: var(--rojo);
+}
+.item-ot p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+.item-ot small {
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+}
+
+/* Chips del tipo de incidencia: radio oculto + píldora */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.chip input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.chip span {
+  display: block;
+  padding: 0.5rem 0.8rem;
+  border: 1px solid var(--borde);
+  border-radius: 50rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.chip input:checked + span {
+  background: var(--primario);
+  border-color: var(--primario);
+  color: #fff;
+  font-weight: 600;
+}
+.chip input:focus-visible + span {
+  outline: 2px solid var(--primario-texto);
+  outline-offset: 2px;
+}
+
+/* Detalle de la OT */
+.detalle-motivo {
+  margin: 0.75rem 0;
+  font-size: 0.95rem;
+}
+.datos-dos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem 1rem;
+  margin: 0 0 1rem;
+}
+.datos-dos dt {
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+}
+.datos-dos dd {
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.enlace-tarjeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0.9rem;
+  margin-bottom: 1rem;
+  background: var(--fondo-1);
+  border: 1px solid var(--borde);
+  border-radius: 0.75rem;
+  color: inherit;
+  text-decoration: none;
+}
+.enlace-tarjeta > span:first-child {
+  display: grid;
+}
+.enlace-tarjeta small {
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+}
+.fila-botones {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+.fila-botones .boton-secundario {
+  justify-content: center;
+}
+.boton-peligro,
+.boton-peligro-texto {
+  color: var(--rojo);
+}
+.boton-peligro:hover {
+  border-color: var(--rojo);
+  color: var(--rojo);
+}
+.boton-peligro-texto {
+  width: auto;
+  background: none;
+  border: none;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+/* Tarjeta de la respuesta del coordinador */
+.tarjeta-accion {
+  border-color: var(--primario);
+}
+.tarjeta-accion .campo-ayuda {
+  margin-top: 0.75rem;
+}
+.boton-estado {
+  padding: 0.85rem;
+  border-radius: 0.75rem;
+  border: 1px solid transparent;
+  font-weight: 600;
+  cursor: pointer;
+}
+.boton-valida {
+  background: rgba(52, 211, 153, 0.15);
+  border-color: var(--verde);
+  color: var(--verde);
+}
+.boton-no-valida {
+  background: rgba(248, 113, 113, 0.15);
+  border-color: var(--rojo);
+  color: var(--rojo);
+}
+
+/* Historial de la OT: línea de tiempo con puntitos */
+.linea-tiempo {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 1.25rem;
+  border-left: 2px solid var(--borde);
+  display: grid;
+  gap: 1rem;
+}
+.paso {
+  position: relative;
+  display: grid;
+  gap: 0.15rem;
+}
+.paso::before {
+  content: "";
+  position: absolute;
+  left: calc(-1.25rem - 6px);
+  top: 0.3rem;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--amarillo);
+}
+.paso-valida::before {
+  background: var(--verde);
+}
+.paso-no-valida::before {
+  background: var(--rojo);
+}
+.paso small {
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+}
+.paso p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+/* =========================================================
+   15. DESCUENTOS
+   ========================================================= */
+.tarjeta-saldo {
+  text-align: center;
+}
+
+/* Barra dividida: rojo (a descontar), amarillo (revisión), verde (justificado).
+   Cada parte crece según su monto (flex-grow lo pone descuentos.js). */
+.barra-partes {
+  display: flex;
+  gap: 2px;
+  height: 0.75rem;
+  border-radius: 50rem;
+  overflow: hidden;
+  background: var(--borde);
+}
+.barra-partes span {
+  flex: 0 1 0;
+}
+.parte-rojo {
+  background: var(--rojo);
+}
+.parte-amarillo {
+  background: var(--amarillo);
+}
+.parte-verde {
+  background: var(--verde);
+}
+
+.lista-detalle {
+  margin-bottom: 1rem;
+}
+#registrar-descuento {
+  margin-bottom: 0.5rem;
+}
+.boton-ancho {
+  justify-content: center;
+}
+
+/* =========================================================
+   16. NAVEGACIÓN INFERIOR (como una app)
+   ========================================================= */
+/* Espacio abajo para que la barra fija no tape el contenido */
+body {
+  padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+}
+
+.nav-inferior {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  padding: 0.4rem 0.25rem calc(0.4rem + env(safe-area-inset-bottom));
+  background: var(--tarjeta);
+  border-top: 1px solid var(--borde);
+}
+.nav-inferior a,
+.nav-inferior button {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.2rem;
+  padding: 0.35rem 0;
+  background: none;
+  border: none;
+  border-radius: 0.75rem;
+  color: var(--texto-suave);
+  font-size: 0.7rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+.nav-inferior .icono {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+.nav-inferior .activo {
+  color: var(--primario-texto);
+  font-weight: 600;
+}
+/* Numerito de OT pendientes */
+.nav-contador {
+  position: absolute;
+  top: 0;
+  left: calc(50% + 0.4rem);
+  min-width: 1.1rem;
+  padding: 0 0.3rem;
+  border-radius: 50rem;
+  background: var(--amarillo);
+  color: #111827;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1.1rem;
+}
+
+/* En tablet o computadora la barra queda del mismo ancho que el contenido */
+@media (min-width: 40rem) {
+  .nav-inferior {
+    max-width: 30rem;
+    margin: 0 auto;
+    border: 1px solid var(--borde);
+    border-bottom: none;
+    border-radius: 1rem 1rem 0 0;
+  }
+}

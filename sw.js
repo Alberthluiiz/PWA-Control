@@ -10,7 +10,7 @@
 
 // 1. Nombre de la caché. Cambia el número (v1 → v2 → v3...) cada vez
 //    que quieras forzar que todos los celulares borren la copia vieja.
-const VERSION = "v18";
+const VERSION = "v19";
 const CACHE = `cuadres-${VERSION}`;
 
 // 2. Archivos de la app que se guardan apenas se instala.
@@ -21,7 +21,40 @@ const ARCHIVOS = [
   "./index.html",
   "./css/normalize.css",
   "./css/styles.css",
-  "./js/app.js",
+  // Todos los módulos de JavaScript (si agregas un archivo .js, súmalo aquí)
+  "./js/config.js",
+  "./js/datos/adaptador-api.js",
+  "./js/datos/adaptador-local.js",
+  "./js/datos/almacen-local.js",
+  "./js/datos/fotos.js",
+  "./js/datos/index.js",
+  "./js/datos/migraciones.js",
+  "./js/main.js",
+  "./js/pantallas/copia.js",
+  "./js/pantallas/descuentos.js",
+  "./js/pantallas/estado.js",
+  "./js/pantallas/excel.js",
+  "./js/pantallas/inicio.js",
+  "./js/pantallas/navegacion.js",
+  "./js/pantallas/ot.js",
+  "./js/pantallas/pwa.js",
+  "./js/pantallas/recordatorios.js",
+  "./js/pantallas/tema.js",
+  "./js/pantallas/turnos.js",
+  "./js/pantallas/usuarios.js",
+  "./js/servicios/descuentos.js",
+  "./js/servicios/ot.js",
+  "./js/servicios/turnos.js",
+  "./js/servicios/usuarios.js",
+  "./js/tema-inicial.js",
+  "./js/utilidades/avatar.js",
+  "./js/utilidades/descargar.js",
+  "./js/utilidades/dinero.js",
+  "./js/utilidades/fechas.js",
+  "./js/utilidades/ids.js",
+  "./js/utilidades/imagenes.js",
+  "./js/utilidades/seguridad.js",
+  "./js/utilidades/zip.js",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
